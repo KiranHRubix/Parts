@@ -18,7 +18,7 @@ const (
 )
 
 // Token represents a node in the tree
-type Token struct {
+type PartToken struct {
 	Level int
 	Path  string
 	Value float64
@@ -74,14 +74,103 @@ func selectTokenPerLevel(amount float64) (Result, error) {
 	return result, nil
 }
 
+type TokenGenerationResult struct {
+	PartToken       []PartToken
+	RemainingAmount float64
+	Message         string
+	Status          bool
+}
+
+/*
+Starting with level 1 as root token
+
+Even levels split parent to 2 equal parts
+Odd levels split parent to 5 equal parts
+
+Level: 1 - Node Value: 1.000
+Level: 2 - Node Value: 0.500
+Level: 3 - Node Value: 0.100
+Level: 4 - Node Value: 0.050
+Level: 5 - Node Value: 0.010
+Level: 6 - Node Value: 0.005
+Level: 7 - Node Value: 0.001
+*/
+
+/**
+
+
+generateToken generates token  based on the required denomination, parent token hash, and token value.
+
+
+@param RequiredDenomination []map[float64]int - The required denomination for generating token hashes.
+
+@param ParentTokenHash string - The parent token hash used for generating token hashes.
+
+@param TokenValue float64 - The value of the token used for generating token hashes.
+
+
+@return *TokenGenerationResult - The result of the token generation process.
+
+@return error - An error if any occurred during the token generation process.
+*/
+
+// This method creates the required token based on the nonbinary tree structure where we have levels from 1-7 and denominatiosn for each level
+// the PartToken struct has the value path where the path from the ParentToken to the crequired denomination token would be laid out
+
+func generateToken(RequiredDenomination []map[float64]int, ParentTokenHash string, TokenValue float64) (*TokenGenerationResult, error) {
+	result := &TokenGenerationResult{
+		Status:    false,
+		PartToken: []PartToken{},
+	}
+
+	// Iterate over each level
+	for level, denominations := range RequiredDenomination {
+		// Iterate over each denomination at this level
+		for denomination, count := range denominations {
+			// Generate tokens for this denomination
+			for i := 0; i < count; i++ {
+				// Generate token hash
+				//tokenHash := sha3.Sum256([]byte(fmt.Sprintf("%s%d", ParentTokenHash, i)))
+				//tokenHashString := hex.EncodeToString(tokenHash[:])
+
+				// Create a new PartToken
+				partToken := PartToken{
+					Level: level + 1,
+					Path:  fmt.Sprintf("%s%d", ParentTokenHash, i),
+					Value: denomination,
+				}
+
+				// Add PartToken to result
+				result.PartToken = append(result.PartToken, partToken)
+			}
+		}
+	}
+
+	result.Status = true
+	return result, nil
+}
+
 func main() {
 	// Example usage
-	amountToTransfer := 0.597
+	amountToTransfer := 0.611
 	fmt.Printf("Amount to Transfer: %.3f\n", amountToTransfer)
 
-	result, err := selectTokenPerLevel(amountToTransfer)
-
+	reqDenom, err := selectTokenPerLevel(amountToTransfer)
 	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	result, err := generateToken(reqDenom.RequiredDenomination, "TokenHash1", 1)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	for _, partToken := range result.PartToken {
+		fmt.Println("partToken.Level", partToken.Level)
+		fmt.Println("partToken.Path", partToken.Path)
+		fmt.Println("partToken.Value", partToken.Value)
+	}
+
+	/* if err != nil {
 		fmt.Println("Error:", err)
 	} else {
 		fmt.Println("Selected Denominations and Counts:")
@@ -92,5 +181,5 @@ func main() {
 				}
 			}
 		}
-	}
+	} */
 }
