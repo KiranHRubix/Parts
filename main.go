@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"sort"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -90,69 +89,47 @@ func selectTokenPerLevel(amount float64) (Result, error) {
 	return result, nil
 }
 
-func checkForPartTokens() []TokenList {
-	// Open SQLite database
+func checkForPartTokens() ([]TokenList, error) {
 	db, err := sql.Open("sqlite3", "rubixtest.db")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer db.Close()
 
 	// Prepare SQL statement
-	stmt, err := db.Prepare("SELECT token_id, parent_token_id, token_value, did, token_status FROM TokensTable WHERE token_value BETWEEN ? AND ? AND token_value NOT IN (0, 1) ORDER BY token_value ASC")
-
+	stmt, err := db.Prepare("SELECT token_id, token_value FROM TokensTable WHERE token_value BETWEEN ? AND ? AND token_value NOT IN (0, 1) ORDER BY token_value ASC")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer stmt.Close()
 
 	// Execute the query
 	rows, err := stmt.Query(0, 1)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer rows.Close()
 
-	// Initialize a map to store tokenname-tokenvalue pairs
-	tokenMap := make(map[string]float64)
-	fmt.Println(tokenMap)
-	// Iterate through the result set and store data in the map
+	// Process rows
+	var tokenList []TokenList
 	for rows.Next() {
 		var tokenID string
-		var parentTokenID string
 		var tokenValue float64
-		var did string
-		var tokenStatus int
-		if err := rows.Scan(&tokenID, &parentTokenID, &tokenValue, &did, &tokenStatus); err != nil {
-			log.Fatal(err)
+		if err := rows.Scan(&tokenID, &tokenValue); err != nil {
+			return nil, err
 		}
-		tokenMap[tokenID] = tokenValue
+		tokenList = append(tokenList, TokenList{Name: tokenID, Value: tokenValue})
 	}
-	fmt.Println("Token Map:", tokenMap)
-	// Check for errors during row iteration
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	// Convert map to slice of structs
-	var tokenList []TokenList
-	for name, value := range tokenMap {
-		tokenList = append(tokenList, struct {
-			Name  string
-			Value float64
-		}{Name: name, Value: value})
+		return nil, err
 	}
 
 	// Sort the slice based on token values
 	sort.Slice(tokenList, func(i, j int) bool {
 		return tokenList[i].Value < tokenList[j].Value
 	})
-	fmt.Println("Token List:", tokenList)
-	// Iterate over the sorted slice and print token names and values
-	for _, token := range tokenList {
-		fmt.Printf("Token Name: %s, Token Value: %.2f\n", token.Name, token.Value)
-	}
-	return tokenList
+
+	return tokenList, nil
 }
 
 func getTokensForTransfer(tokenList []TokenList, amount float64) {
@@ -188,7 +165,7 @@ func getTokensForTransfer(tokenList []TokenList, amount float64) {
 
 func main() {
 	// Example usage
-	var tokenList = checkForPartTokens()
+	tokenList, err := checkForPartTokens()
 	getTokensForTransfer(tokenList, 0.597)
 	amountToTransfer := 0.597
 	fmt.Printf("Amount to Transfer: %.3f\n", amountToTransfer)
