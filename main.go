@@ -1,9 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"sort"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/shopspring/decimal"
 )
 
@@ -22,6 +25,19 @@ type Token struct {
 	Level int
 	Path  string
 	Value float64
+}
+
+type TokenList struct {
+	Name  string
+	Value float64
+}
+
+type TokenInfo struct {
+	TokenID       string
+	ParentTokenID string
+	TokenValue    float64
+	DID           string
+	TokenStatus   int
 }
 
 var Denominations = []float64{1.0, 0.500, 0.100, 0.050, 0.010, 0.005, 0.001}
@@ -74,8 +90,106 @@ func selectTokenPerLevel(amount float64) (Result, error) {
 	return result, nil
 }
 
+func checkForPartTokens() []TokenList {
+	// Open SQLite database
+	db, err := sql.Open("sqlite3", "rubixtest.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// Prepare SQL statement
+	stmt, err := db.Prepare("SELECT token_id, parent_token_id, token_value, did, token_status FROM TokensTable WHERE token_value BETWEEN ? AND ? AND token_value NOT IN (0, 1) ORDER BY token_value ASC")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+
+	// Execute the query
+	rows, err := stmt.Query(0, 1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	// Initialize a map to store tokenname-tokenvalue pairs
+	tokenMap := make(map[string]float64)
+	fmt.Println(tokenMap)
+	// Iterate through the result set and store data in the map
+	for rows.Next() {
+		var tokenID string
+		var parentTokenID string
+		var tokenValue float64
+		var did string
+		var tokenStatus int
+		if err := rows.Scan(&tokenID, &parentTokenID, &tokenValue, &did, &tokenStatus); err != nil {
+			log.Fatal(err)
+		}
+		tokenMap[tokenID] = tokenValue
+	}
+	fmt.Println("Token Map:", tokenMap)
+	// Check for errors during row iteration
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Convert map to slice of structs
+	var tokenList []TokenList
+	for name, value := range tokenMap {
+		tokenList = append(tokenList, struct {
+			Name  string
+			Value float64
+		}{Name: name, Value: value})
+	}
+
+	// Sort the slice based on token values
+	sort.Slice(tokenList, func(i, j int) bool {
+		return tokenList[i].Value < tokenList[j].Value
+	})
+	fmt.Println("Token List:", tokenList)
+	// Iterate over the sorted slice and print token names and values
+	for _, token := range tokenList {
+		fmt.Printf("Token Name: %s, Token Value: %.2f\n", token.Name, token.Value)
+	}
+	return tokenList
+}
+
+func getTokensForTransfer(tokenList []TokenList, amount float64) {
+	var selectedTokens []TokenList
+	// Step 2: Iterate through the sorted token list
+	for i := 0; i < len(tokenList); i++ {
+		token := tokenList[i]
+		// Step 3: Check if the token value is less than or equal to the remaining amount
+		if token.Value <= amount {
+			// Step 4: Subtract the token value from the remaining amount
+			amount -= token.Value
+			// remove the selected tokens from the list and store the token details in a map
+			selectedTokens = append(selectedTokens, token)
+			tokenList = append(tokenList[:i], tokenList[i+1:]...)
+			fmt.Printf("Selected Token: %s, Token Value: %.2f\n, amount : %.3f \n", token.Name, token.Value, amount)
+			fmt.Println("Token List:", tokenList)
+			fmt.Println("Selected Tokens:", selectedTokens)
+			if amount == 0 {
+				fmt.Println("Amount is 0, we got the required tokens")
+			} else {
+				fmt.Println("Amount is not 0, we need to select more tokens")
+				//check whether the remaining amount is greater than the smallest token value
+				if amount < tokenList[0].Value {
+					fmt.Println("Amount is less than the smallest token value, we need to select more tokens")
+					fmt.Printf("Remaining Amount: %.3f\n ", amount, "Split the tokens")
+				}
+			}
+			// store the token details in a map
+		}
+	}
+
+}
+
 func main() {
 	// Example usage
+	var tokenList = checkForPartTokens()
+	getTokensForTransfer(tokenList, 0.597)
 	amountToTransfer := 0.597
 	fmt.Printf("Amount to Transfer: %.3f\n", amountToTransfer)
 
