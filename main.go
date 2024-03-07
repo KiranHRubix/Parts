@@ -156,7 +156,7 @@ func generateToken(RequiredDenomination []map[float64]int, ParentTokenHash strin
 	return result, nil
 }
 
-func main() {
+/* func main() {
 	// Example usage
 	amountToTransfer := 0.611
 	fmt.Printf("Amount to Transfer: %.3f\n", amountToTransfer)
@@ -176,16 +176,4 @@ func main() {
 		fmt.Println("partToken.Value", partToken.Value)
 	}
 
-	/* if err != nil {
-		fmt.Println("Error:", err)
-	} else {
-		fmt.Println("Selected Denominations and Counts:")
-		for i, m := range result.RequiredDenomination {
-			if m != nil {
-				for denom, count := range m {
-					fmt.Printf("Level %d - Denomination: %.3f, Count: %d\n", i+1, denom, count)
-				}
-			}
-		}
-	} */
-}
+} */
