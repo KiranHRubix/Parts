@@ -117,6 +117,12 @@ generateToken generates token  based on the required denomination, parent token 
 // This method creates the required token based on the nonbinary tree structure where we have levels from 1-7 and denominatiosn for each level
 // the PartToken struct has the value path where the path from the ParentToken to the crequired denomination token would be laid out
 
+/*
+if the parent token is whole token , create an entire tree and traverse and select the leaf nodes along with path travelled
+
+if the parent token is a part token, <need to think>
+*/
+
 func generateToken(RequiredDenomination []map[float64]int, ParentTokenHash string, TokenValue float64) (*TokenGenerationResult, error) {
 	result := &TokenGenerationResult{
 		Status:    false,
