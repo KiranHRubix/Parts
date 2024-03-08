@@ -1,9 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 type Node struct {
 	ID       int
@@ -105,14 +102,13 @@ func FindPathDFS(node *Node, value float64, path []int, visited map[string]bool)
 	isSub := false
 	// Check if the current path is a subpath of any previously visited paths
 	for prevPath := range visited {
-		if strings.Contains(prevPath, pathStr) {
+		if isSubpath(path, parsePath(prevPath)) {
 			// If the current path is a subpath of a previously visited path, set the flag and break the loop
 			isSub = true
 			break
 		}
 	}
 
-	//fmt.Println(isSub)
 	// If the current path is a subpath of a previously visited path, add it to the visited paths
 	if isSub {
 		visited[pathStr] = true
