@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Node struct {
 	ID       int
@@ -75,6 +78,8 @@ func createChildren(parent *Node, depth, numChildren int, value float64) {
 
 func isSubpath(path1, path2 []int) bool {
 	// Check if path1 is a subpath of path2
+	//fmt.Println("path1", path1)
+	//fmt.Println("path 2", path2)
 	if len(path1) > len(path2) {
 		return false
 	}
@@ -100,13 +105,14 @@ func FindPathDFS(node *Node, value float64, path []int, visited map[string]bool)
 	isSub := false
 	// Check if the current path is a subpath of any previously visited paths
 	for prevPath := range visited {
-		if isSubpath(path, parsePath(prevPath)) {
+		if strings.Contains(prevPath, pathStr) {
 			// If the current path is a subpath of a previously visited path, set the flag and break the loop
 			isSub = true
 			break
 		}
 	}
 
+	//fmt.Println(isSub)
 	// If the current path is a subpath of a previously visited path, add it to the visited paths
 	if isSub {
 		visited[pathStr] = true
@@ -157,6 +163,7 @@ func parsePath(pathStr string) []int {
 }
 
 func FindPathBFS(root *Node, value float64) []int {
+	fmt.Println("checking for value", value)
 	if root == nil {
 		return nil
 	}
@@ -182,6 +189,7 @@ func FindPathBFS(root *Node, value float64) []int {
 		// If the current path is a subpath of any previously visited paths, continue with the next node in the queue
 		isSub := false
 		for prevPath := range visited {
+			fmt.Println("prevPath", prevPath)
 			if isSubpath(paths[node], parsePath(prevPath)) {
 				isSub = true
 				break
@@ -191,9 +199,14 @@ func FindPathBFS(root *Node, value float64) []int {
 			continue
 		}
 
+		fmt.Println("isSub", isSub)
+
 		// If the current node's value matches the target value, return the path
 		if node.Value == value {
-			return paths[node]
+			path := paths[node]
+			// Remove the last node from the visited paths
+			delete(visited, pathStr)
+			return path
 		}
 
 		// Add the current path to the visited paths
@@ -217,7 +230,7 @@ func main() {
 	root := CreateTree(1.0, 7) // Creates a tree with root value 1, each node having 2 or 5 children depending on the depth, and a depth of 7
 
 	//0.521
-	values := []float64{0.001, 0.01, 0.1}
+	values := []float64{0.001, 0.001, 0.001, 0.005, 0.005}
 	visited := make(map[string]bool)
 	fmt.Println("using DFS")
 	for _, value := range values {
@@ -225,9 +238,9 @@ func main() {
 		fmt.Printf("Path to %f: %v\n", value, path)
 	}
 
-	fmt.Println("usinf BFS")
+	/* fmt.Println("usinf BFS")
 	for _, value := range values {
 		path := FindPathBFS(root, value)
 		fmt.Printf("Path to %f: %v\n", value, path)
-	}
+	} */
 }
