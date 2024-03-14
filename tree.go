@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Node struct {
 	ID       int
@@ -98,7 +101,7 @@ func FindPathDFS(node *Node, value float64, path []int, visited map[string]bool)
 
 	// Convert the path to a string to use as a key in the visited map
 	pathStr := fmt.Sprint(path)
-
+	//fmt.Println(pathStr)
 	isSub := false
 	// Check if the current path is a subpath of any previously visited paths
 	for prevPath := range visited {
@@ -159,7 +162,7 @@ func parsePath(pathStr string) []int {
 	return path
 }
 
-/* func FindPathBFS(root *Node, value float64) []int {
+func FindPathBFS(root *Node, value float64) []int {
 	//fmt.Println("checking for value", value)
 	if root == nil {
 		return nil
@@ -221,24 +224,50 @@ func parsePath(pathStr string) []int {
 
 	// If the value was not found, return nil
 	return nil
-} */
+}
 
+func formatPath(path []int) string {
+	var builder strings.Builder
+
+	builder.WriteString("[")
+	for i, nodeID := range path {
+		if i > 0 {
+			builder.WriteString(" ")
+		}
+		builder.WriteString(fmt.Sprintf("%d", nodeID))
+	}
+	builder.WriteString("]")
+
+	return builder.String()
+}
 func main() {
 	root := CreateTree(1.0, 7) // Creates a tree with root value 1, each node having 2 or 5 children depending on the depth, and a depth of 7
 
 	//0.521
-	//values := []float64{0.001, 0.001, 0.001, 0.005, 0.005, 0.01, 0.1}
-	values := []float64{0.1, 0.01, 0.005, 0.005, 0.001, 0.001, 0.001}
-	/* visited := make(map[string]bool)
+	//values := []float64{0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.005, 0.005, 0.005, 0.005, 0.005, 0.05, 0.05, 0.05}
+	//values := []float64{0.05, 0.05, 0.05, 0.005, 0.005, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001}
+	values := []float64{0.001, 0.005, 0.01, 0.05, 0.5}
+	visited := make(map[string]bool)
+	visited2 := make(map[string]bool)
+
 	fmt.Println("using DFS")
 	for _, value := range values {
 		path := FindPathDFS(root, value, []int{}, visited)
+		visited2[formatPath(path)] = true
 		fmt.Printf("Path to %f: %v\n", value, path)
 	}
-	*/
-	fmt.Println("usinf BFS")
+
+	//visited2 := make(map[string]bool)
+	values2 := []float64{0.001, 0.05, 0.5}
+	fmt.Println("using DFS and new values but old visited")
+	for _, value := range values2 {
+		path := FindPathDFS(root, value, []int{}, visited2)
+		fmt.Printf("Path to %f: %v\n", value, path)
+	}
+
+	/* fmt.Println("usinf BFS")
 	for _, value := range values {
 		path := FindPathBFS(root, value)
 		fmt.Printf("Path to %f: %v\n", value, path)
-	}
+	} */
 }
