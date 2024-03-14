@@ -124,6 +124,7 @@ func FindPathDFS(node *Node, value float64, path []int, visited map[string]bool)
 	for _, child := range node.Children {
 		result := FindPathDFS(child, value, path, visited)
 		if result != nil {
+			visited[pathStr] = true
 			// If the value is found in the subtree rooted at the child, return the result
 			return result
 		}
@@ -158,8 +159,8 @@ func parsePath(pathStr string) []int {
 	return path
 }
 
-func FindPathBFS(root *Node, value float64) []int {
-	fmt.Println("checking for value", value)
+/* func FindPathBFS(root *Node, value float64) []int {
+	//fmt.Println("checking for value", value)
 	if root == nil {
 		return nil
 	}
@@ -185,7 +186,7 @@ func FindPathBFS(root *Node, value float64) []int {
 		// If the current path is a subpath of any previously visited paths, continue with the next node in the queue
 		isSub := false
 		for prevPath := range visited {
-			fmt.Println("prevPath", prevPath)
+			//fmt.Println("prevPath", prevPath)
 			if isSubpath(paths[node], parsePath(prevPath)) {
 				isSub = true
 				break
@@ -195,7 +196,7 @@ func FindPathBFS(root *Node, value float64) []int {
 			continue
 		}
 
-		fmt.Println("isSub", isSub)
+		//fmt.Println("isSub", isSub)
 
 		// If the current node's value matches the target value, return the path
 		if node.Value == value {
@@ -220,23 +221,24 @@ func FindPathBFS(root *Node, value float64) []int {
 
 	// If the value was not found, return nil
 	return nil
-}
+} */
 
 func main() {
 	root := CreateTree(1.0, 7) // Creates a tree with root value 1, each node having 2 or 5 children depending on the depth, and a depth of 7
 
 	//0.521
-	values := []float64{0.001, 0.001, 0.001, 0.005, 0.005}
-	visited := make(map[string]bool)
+	//values := []float64{0.001, 0.001, 0.001, 0.005, 0.005, 0.01, 0.1}
+	values := []float64{0.1, 0.01, 0.005, 0.005, 0.001, 0.001, 0.001}
+	/* visited := make(map[string]bool)
 	fmt.Println("using DFS")
 	for _, value := range values {
 		path := FindPathDFS(root, value, []int{}, visited)
 		fmt.Printf("Path to %f: %v\n", value, path)
 	}
-
-	/* fmt.Println("usinf BFS")
+	*/
+	fmt.Println("usinf BFS")
 	for _, value := range values {
 		path := FindPathBFS(root, value)
 		fmt.Printf("Path to %f: %v\n", value, path)
-	} */
+	}
 }
