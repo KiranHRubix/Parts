@@ -19,7 +19,7 @@ const (
 
 // Token represents a node in the tree
 type PartToken struct {
-	Level int
+	//Level int
 	Path  string
 	Value float64
 }
@@ -27,12 +27,12 @@ type PartToken struct {
 var Denominations = []float64{1.0, 0.500, 0.100, 0.050, 0.010, 0.005, 0.001}
 
 type Result struct {
-	RequiredDenomination []map[float64]int
+	RequiredDenomination map[float64]int
 }
 
-func selectTokenPerLevel(amount float64) (Result, error) {
+func SelectTokenPerLevel(amount float64) (Result, error) {
 	result := Result{}
-	result.RequiredDenomination = make([]map[float64]int, len(Denominations))
+	result.RequiredDenomination = make(map[float64]int, 0)
 
 	// Step 1: Sort denominations in descending order
 	sort.Sort(sort.Reverse(sort.Float64Slice(Denominations)))
@@ -53,17 +53,17 @@ func selectTokenPerLevel(amount float64) (Result, error) {
 			continue
 		}
 
-		fmt.Println("After considering denomination", denomination, "Remaining Amount:", remainingAmount)
+		//fmt.Println("After considering denomination", denomination, "Remaining Amount:", remainingAmount)
 		// Step 3: Check how many times the denomination can be subtracted from the remaining value without exceeding it
 
 		for remainingAmount.Cmp(denomination) == 1 || remainingAmount.Cmp(denomination) == 0 {
 			remainingAmount = remainingAmount.Sub(denomination)
 
 			// Step 4: Update the count for the selected denomination
-			if result.RequiredDenomination[i] == nil {
+			/* if result.RequiredDenomination[i] == nil {
 				result.RequiredDenomination[i] = make(map[float64]int)
-			}
-			result.RequiredDenomination[i][denominationFloat]++
+			} */
+			result.RequiredDenomination[denominationFloat]++
 		}
 	}
 
@@ -96,84 +96,129 @@ Level: 6 - Node Value: 0.005
 Level: 7 - Node Value: 0.001
 */
 
-/**
-
-
+/*
+*
 generateToken generates token  based on the required denomination, parent token hash, and token value.
-
-
 @param RequiredDenomination []map[float64]int - The required denomination for generating token hashes.
-
 @param ParentTokenHash string - The parent token hash used for generating token hashes.
-
 @param TokenValue float64 - The value of the token used for generating token hashes.
-
-
 @return *TokenGenerationResult - The result of the token generation process.
-
 @return error - An error if any occurred during the token generation process.
 */
-
-// This method creates the required token based on the nonbinary tree structure where we have levels from 1-7 and denominatiosn for each level
-// the PartToken struct has the value path where the path from the ParentToken to the crequired denomination token would be laid out
-
-/*
-if the parent token is whole token , create an entire tree and traverse and select the leaf nodes along with path travelled
-
-if the parent token is a part token, <need to think>
-*/
-
-func generateToken(RequiredDenomination []map[float64]int, ParentTokenHash string, TokenValue float64) (*TokenGenerationResult, error) {
+func GenerateToken(RequiredDenomination map[float64]int, ParentTokenHash string, TokenValue float64, visitedOld map[string]bool) (*TokenGenerationResult, map[string]bool, error) {
 	result := &TokenGenerationResult{
-		Status:    false,
-		PartToken: []PartToken{},
+		Status: false,
 	}
 
-	// Iterate over each level
-	for level, denominations := range RequiredDenomination {
-		// Iterate over each denomination at this level
-		for denomination, count := range denominations {
-			// Generate tokens for this denomination
-			for i := 0; i < count; i++ {
-				// Generate token hash
-				//tokenHash := sha3.Sum256([]byte(fmt.Sprintf("%s%d", ParentTokenHash, i)))
-				//tokenHashString := hex.EncodeToString(tokenHash[:])
+	var denominationsList []float64
+	// Iterate over the keys of the RequiredDenomination map
+	for denomination, count := range RequiredDenomination {
+		// Append the denomination to the denominationsList 'count' number of times
+		for i := 0; i < count; i++ {
+			denominationsList = append(denominationsList, denomination)
+		}
+	}
 
-				// Create a new PartToken
-				partToken := PartToken{
-					Level: level + 1,
-					Path:  fmt.Sprintf("%s%d", ParentTokenHash, i),
-					Value: denomination,
-				}
+	sort.Float64s(denominationsList)
+	//fmt.Println(denominationsList)
 
-				// Add PartToken to result
-				result.PartToken = append(result.PartToken, partToken)
-			}
+	visitedNew := make(map[string]bool, 0)
+
+	//fmt.Println("visitedOld", visitedOld)
+	if len(visitedOld) != 0 {
+		for key, value := range visitedOld {
+			visitedNew[key] = value
+		}
+	}
+
+	var root *Node
+	if TokenValue == 1 && len(visitedOld) >= 0 {
+		root = CreateTree(1.0, 7)
+		//printTreeDFS(root, 1)
+	}
+
+	result.PartToken = make([]PartToken, len(denominationsList))
+	for i, value := range denominationsList {
+		//var path []int
+		pathForValue := FindPathDFS(root, value, []int{}, visitedOld)
+		if len(pathForValue) == 0 {
+			result.RemainingAmount += value
+		} else {
+			result.PartToken[i].Path = fmt.Sprint(pathForValue)
+			result.PartToken[i].Value = value
+			visitedNew[result.PartToken[i].Path] = true
 		}
 	}
 
 	result.Status = true
-	return result, nil
+	return result, visitedNew, nil
 }
 
 /* func main() {
-	// Example usage
-	amountToTransfer := 0.611
-	fmt.Printf("Amount to Transfer: %.3f\n", amountToTransfer)
+	root := CreateTree(1.0, 7) // Creates a tree with root value 1, each node having 2 or 5 children depending on the depth, and a depth of 7
 
-	reqDenom, err := selectTokenPerLevel(amountToTransfer)
-	if err != nil {
-		fmt.Println("Error:", err)
+	//0.521
+	//values := []float64{0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.005, 0.005, 0.005, 0.005, 0.005, 0.05, 0.05, 0.05}
+	//values := []float64{0.05, 0.05, 0.05, 0.005, 0.005, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001}
+	values := []float64{0.001, 0.005, 0.01, 0.05, 0.5}
+	visited := make(map[string]bool)
+	visited2 := make(map[string]bool)
+
+	fmt.Println("using DFS")
+	for _, value := range values {
+		path := FindPathDFS(root, value, []int{}, visited)
+		visited2[formatPath(path)] = true
+		fmt.Printf("Path to %f: %v\n", value, path)
 	}
 
-	result, err := generateToken(reqDenom.RequiredDenomination, "TokenHash1", 1)
-	if err != nil {
-		fmt.Println("Error:", err)
+	//visited2 := make(map[string]bool)
+	values2 := []float64{0.001, 0.05, 0.5}
+	fmt.Println("using DFS and new values but old visited")
+	for _, value := range values2 {
+		path := FindPathDFS(root, value, []int{}, visited2)
+		if len(path) == 0 {
+			fmt.Printf("no path to value %v in this tree \n", value)
+		}
+		fmt.Printf("Path to %f: %v\n", value, path)
 	}
-	for _, partToken := range result.PartToken {
-		fmt.Println("partToken.Level", partToken.Level)
-		fmt.Println("partToken.Path", partToken.Path)
-		fmt.Println("partToken.Value", partToken.Value)
-	}
-
 } */
+
+func main() {
+	amount := 0.011
+	requiredDenomination, err := SelectTokenPerLevel(amount)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	//fmt.Println(requiredDenomination.RequiredDenomination)
+
+	visitedOld := make(map[string]bool, 0)
+	TokenGenerationResult, visitedNew, err := GenerateToken(requiredDenomination.RequiredDenomination, "ParentToken", 1.0, visitedOld)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("VIsited NEw", visitedNew)
+	for _, PartToken := range TokenGenerationResult.PartToken {
+		fmt.Println("PArtToken", PartToken)
+	}
+
+	//passing the visited new in previosu as the visited old
+	fmt.Println("new set old token ")
+
+	amount = 0.01
+	requiredDenomination, err = SelectTokenPerLevel(amount)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	//fmt.Println(requiredDenomination.RequiredDenomination)
+
+	//visitedOld := make(map[string]bool, 0)
+	TokenGenerationResult, visitedNew2, err := GenerateToken(requiredDenomination.RequiredDenomination, "ParentToken", 1.0, visitedNew)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("VIsited NEw", visitedNew2)
+	for _, PartToken := range TokenGenerationResult.PartToken {
+		fmt.Println("PArtToken", PartToken)
+	}
+	fmt.Println("remaining amount", TokenGenerationResult.RemainingAmount)
+}
