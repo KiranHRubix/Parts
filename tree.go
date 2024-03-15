@@ -45,47 +45,14 @@ func createChildren(parent *Node, depth, numChildren int, value float64) {
 	}
 }
 
-/* func FindPath(node *Node, value float64, path []int, visited map[string]bool) []int {
-	if node == nil {
-		return nil
-	}
-
-	// Add the current node's ID to the path
-	path = append(path, node.ID)
-
-	// Convert the path to a string to use as a key in the visited map
-	pathStr := fmt.Sprint(path)
-
-	// If the current node's value matches the target value and the path has not been visited before, return the path
-	if node.Value == value && !visited[pathStr] {
-		visited[pathStr] = true
-		return path
-	}
-
-	// If the current node's value does not match the target value or the path has been visited before, continue the search with the node's children
-	for _, child := range node.Children {
-		result := FindPath(child, value, path, visited)
-		if result != nil {
-			// If the value is found in the subtree rooted at the child, return the result
-			return result
-		}
-	}
-
-	// If the value was not found in the subtree rooted at the current node, remove the node from the path and return nil
-	path = path[:len(path)-1]
-	return nil
-} */
-
-func isSubpath(path1, path2 []int) bool {
-	// Check if path1 is a subpath of path2
-	//fmt.Println("path1", path1)
-	//fmt.Println("path 2", path2)
-	if len(path1) > len(path2) {
+func isSubpath(currentPath, prevPath []int) bool {
+	if len(currentPath) > len(prevPath) {
 		return false
-	}
-	for i := range path1 {
-		if path1[i] != path2[i] {
-			return false
+	} else {
+		for i := range currentPath {
+			if currentPath[i] != prevPath[i] {
+				return false
+			}
 		}
 	}
 	return true
@@ -101,10 +68,10 @@ func FindPathDFS(node *Node, value float64, path []int, visited map[string]bool)
 
 	// Convert the path to a string to use as a key in the visited map
 	pathStr := fmt.Sprint(path)
-	//fmt.Println(pathStr)
 	isSub := false
 	// Check if the current path is a subpath of any previously visited paths
 	for prevPath := range visited {
+		//fmt.Println("prevPath", prevPath)
 		if isSubpath(path, parsePath(prevPath)) {
 			// If the current path is a subpath of a previously visited path, set the flag and break the loop
 			isSub = true
@@ -162,7 +129,7 @@ func parsePath(pathStr string) []int {
 	return path
 }
 
-func FindPathBFS(root *Node, value float64) []int {
+/* func FindPathBFS(root *Node, value float64) []int {
 	//fmt.Println("checking for value", value)
 	if root == nil {
 		return nil
@@ -224,7 +191,7 @@ func FindPathBFS(root *Node, value float64) []int {
 
 	// If the value was not found, return nil
 	return nil
-}
+} */
 
 func formatPath(path []int) string {
 	var builder strings.Builder
@@ -240,7 +207,8 @@ func formatPath(path []int) string {
 
 	return builder.String()
 }
-func main() {
+
+/* func main() {
 	root := CreateTree(1.0, 7) // Creates a tree with root value 1, each node having 2 or 5 children depending on the depth, and a depth of 7
 
 	//0.521
@@ -262,12 +230,23 @@ func main() {
 	fmt.Println("using DFS and new values but old visited")
 	for _, value := range values2 {
 		path := FindPathDFS(root, value, []int{}, visited2)
+		if len(path) == 0 {
+			fmt.Printf("no path to value %v in this tree \n", value)
+		}
 		fmt.Printf("Path to %f: %v\n", value, path)
 	}
+} */
 
-	/* fmt.Println("usinf BFS")
-	for _, value := range values {
-		path := FindPathBFS(root, value)
-		fmt.Printf("Path to %f: %v\n", value, path)
-	} */
+func printTreeDFS(node *Node, level int) {
+	if node == nil {
+		return
+	}
+
+	// Print the current node
+	fmt.Printf("Level: %d - Node Value: %.3f\n", level, node.Value)
+
+	// Print children recursively
+	for _, child := range node.Children {
+		printTreeDFS(child, level+1)
+	}
 }
