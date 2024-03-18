@@ -84,6 +84,8 @@ func FindPathDFS(node *Node, value float64, path []int, visited map[string]bool)
 		visited[pathStr] = true
 	}
 
+	//# To Do:: Check for non traverseed path
+
 	// If the current node's value matches the target value and the path has not been visited before, return the path
 	if node.Value == value && !visited[pathStr] {
 		visited[pathStr] = true
@@ -208,7 +210,7 @@ func formatPath(path []int) string {
 	return builder.String()
 }
 
-/* func main() {
+func main() {
 	root := CreateTree(1.0, 7) // Creates a tree with root value 1, each node having 2 or 5 children depending on the depth, and a depth of 7
 
 	//0.521
@@ -226,7 +228,7 @@ func formatPath(path []int) string {
 	}
 
 	//visited2 := make(map[string]bool)
-	values2 := []float64{0.001, 0.05, 0.5}
+	values2 := []float64{0.001, 0.5}
 	fmt.Println("using DFS and new values but old visited")
 	for _, value := range values2 {
 		path := FindPathDFS(root, value, []int{}, visited2)
@@ -235,7 +237,7 @@ func formatPath(path []int) string {
 		}
 		fmt.Printf("Path to %f: %v\n", value, path)
 	}
-} */
+}
 
 func printTreeDFS(node *Node, level int) {
 	if node == nil {

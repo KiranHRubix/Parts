@@ -141,49 +141,24 @@ func GenerateToken(RequiredDenomination map[float64]int, ParentTokenHash string,
 	for i, value := range denominationsList {
 		//var path []int
 		pathForValue := FindPathDFS(root, value, []int{}, visitedOld)
-		if len(pathForValue) == 0 {
+		pathStr := fmt.Sprint(pathForValue)
+		if len(pathForValue) == 0 /* || visitedOld[pathStr] */ {
 			result.RemainingAmount += value
 		} else {
 			result.PartToken[i].Path = fmt.Sprint(pathForValue)
 			result.PartToken[i].Value = value
-			visitedNew[result.PartToken[i].Path] = true
 		}
+		visitedNew[pathStr] = true
+
 	}
 
 	result.Status = true
 	return result, visitedNew, nil
 }
 
+// To Do: storing visited path in DB ,
+
 /* func main() {
-	root := CreateTree(1.0, 7) // Creates a tree with root value 1, each node having 2 or 5 children depending on the depth, and a depth of 7
-
-	//0.521
-	//values := []float64{0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.005, 0.005, 0.005, 0.005, 0.005, 0.05, 0.05, 0.05}
-	//values := []float64{0.05, 0.05, 0.05, 0.005, 0.005, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001}
-	values := []float64{0.001, 0.005, 0.01, 0.05, 0.5}
-	visited := make(map[string]bool)
-	visited2 := make(map[string]bool)
-
-	fmt.Println("using DFS")
-	for _, value := range values {
-		path := FindPathDFS(root, value, []int{}, visited)
-		visited2[formatPath(path)] = true
-		fmt.Printf("Path to %f: %v\n", value, path)
-	}
-
-	//visited2 := make(map[string]bool)
-	values2 := []float64{0.001, 0.05, 0.5}
-	fmt.Println("using DFS and new values but old visited")
-	for _, value := range values2 {
-		path := FindPathDFS(root, value, []int{}, visited2)
-		if len(path) == 0 {
-			fmt.Printf("no path to value %v in this tree \n", value)
-		}
-		fmt.Printf("Path to %f: %v\n", value, path)
-	}
-} */
-
-func main() {
 	amount := 0.011
 	requiredDenomination, err := SelectTokenPerLevel(amount)
 	if err != nil {
@@ -192,15 +167,18 @@ func main() {
 	//fmt.Println(requiredDenomination.RequiredDenomination)
 
 	visitedOld := make(map[string]bool, 0)
-	TokenGenerationResult, visitedNew, err := GenerateToken(requiredDenomination.RequiredDenomination, "ParentToken", 1.0, visitedOld)
+	TokenGenerationResult, _, err := GenerateToken(requiredDenomination.RequiredDenomination, "ParentToken", 1.0, visitedOld)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("VIsited NEw", visitedNew)
+	//fmt.Println("VIsited NEw", visitedNew)
+	visitedNew := make(map[string]bool, 0)
 	for _, PartToken := range TokenGenerationResult.PartToken {
 		fmt.Println("PArtToken", PartToken)
+		visitedNew[fmt.Sprint(PartToken.Path)] = true
 	}
 
+	fmt.Println("VIsited NEw", visitedNew)
 	//passing the visited new in previosu as the visited old
 	fmt.Println("new set old token ")
 
@@ -221,4 +199,4 @@ func main() {
 		fmt.Println("PArtToken", PartToken)
 	}
 	fmt.Println("remaining amount", TokenGenerationResult.RemainingAmount)
-}
+} */
