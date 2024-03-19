@@ -211,12 +211,12 @@ func formatPath(path []int) string {
 }
 
 func main() {
-	root := CreateTree(1.0, 7) // Creates a tree with root value 1, each node having 2 or 5 children depending on the depth, and a depth of 7
+	root := CreateTree(1.0, 11) // Creates a tree with root value 1, each node having 2 or 5 children depending on the depth, and a depth of 7
 
 	//0.521
 	//values := []float64{0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.005, 0.005, 0.005, 0.005, 0.005, 0.05, 0.05, 0.05}
 	//values := []float64{0.05, 0.05, 0.05, 0.005, 0.005, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001}
-	values := []float64{0.001, 0.005, 0.01, 0.05, 0.5}
+	values := []float64{0.00001, 0.5, 0.1}
 	visited := make(map[string]bool)
 	visited2 := make(map[string]bool)
 
@@ -228,10 +228,10 @@ func main() {
 	}
 
 	//visited2 := make(map[string]bool)
-	values2 := []float64{0.001, 0.5}
+	values2 := []float64{0.05, 0.10}
 	fmt.Println("using DFS and new values but old visited")
 	for _, value := range values2 {
-		path := FindPathDFS(root, value, []int{}, visited2)
+		path := FindPathDFS(root, value, []int{}, visited)
 		if len(path) == 0 {
 			fmt.Printf("no path to value %v in this tree \n", value)
 		}
@@ -245,7 +245,7 @@ func printTreeDFS(node *Node, level int) {
 	}
 
 	// Print the current node
-	fmt.Printf("Level: %d - Node Value: %.3f\n", level, node.Value)
+	fmt.Printf("Level: %d - Node Value: %.5f\n", level, node.Value)
 
 	// Print children recursively
 	for _, child := range node.Children {
